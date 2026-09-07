@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+python-multipart
+passlib[bcrypt]
+PyJWT
+PyPDF2
+docx2txt
+streamlit
+requests
+jinja2
