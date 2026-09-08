@@ -3,7 +3,7 @@ import json
 import requests
 from typing import Dict, Any
 
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "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")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
 PARSE_SYSTEM_PROMPT = """Extract the following structured JSON from this resume: full_name, email, phone, summary, work_experience (list with company, role, dates, bullet_points), education (list with degree, institution, year), and skills (list). Return ONLY valid JSON."""
 

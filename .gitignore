@@ -1,31 +1,39 @@
-# Database
-*.db
-*.sqlite3
-
 # Python
 __pycache__/
-*.pyc
-*.pyo
-venv/
+*.py[cod]
+*$py.class
+*.so
+.Python
 env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
 .env
+.venv
+venv/
+ENV/
 
 # Node
 node_modules/
-dist/
-build/
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+npm-debug.log
+yarn-error.log
 
-# Sensitive Keys
+# Project specific
+*.db
+*.sqlite3
 *.json
 !package.json
 !package-lock.json
-!tsconfig.json
-!vite.config.js
-resume-*.json
-
-# OS
-.DS_Store
+resume-*.json # Firebase service account
+test_output.pdf

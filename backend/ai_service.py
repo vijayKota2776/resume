@@ -4,7 +4,7 @@ import requests
 from typing import Dict, Any
 
 # We can use the OpenAI API or Gemini API. Here is an example using OpenAI structure.
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "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")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
 SYSTEM_PROMPT = """You are a professional resume optimizer. You will be given:
 1. A user's full profile in JSON format: [name, contact, summary, work_experience (list with company, role, dates, bullet points), education, skills, projects, certifications].
