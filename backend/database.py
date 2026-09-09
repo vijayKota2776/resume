@@ -12,3 +12,4 @@ if not firebase_admin._apps:
 
 # Export Firestore database client
 db = firestore.client()
+

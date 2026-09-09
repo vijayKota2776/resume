@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, Save, User, Loader2, CheckCircle, Plus, Trash2 } from 'lucide-react';
 import api from '../utils/api';
 import { useNavigate } from 'react-router-dom';
@@ -20,6 +20,33 @@ const Profile = () => {
     education: [],
     skills: ''
   });
+
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await api.get('/profile');
+      if (res.data.has_profile) {
+        const parsed = res.data.data;
+        setFormData({
+          name: parsed.name || parsed.full_name || '',
+          contact: parsed.contact || parsed.email || '',
+          summary: parsed.summary || '',
+          work_experience: parsed.work_experience || [],
+          education: parsed.education || [],
+          skills: Array.isArray(parsed.skills) ? parsed.skills.join(', ') : (parsed.skills || '')
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch profile', err);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -170,8 +197,14 @@ const Profile = () => {
 
       {error && <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-lg border border-red-100">{error}</div>}
       {message && <div className="mb-4 p-4 bg-green-50 text-green-700 rounded-lg border border-green-100 flex items-center"><CheckCircle className="w-5 h-5 mr-2"/>{message}</div>}
-
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8 space-y-4">
+      
+      {isLoadingProfile ? (
+        <div className="flex justify-center items-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        </div>
+      ) : (
+        <>
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8 space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-800">Auto-fill with AI</h3>
@@ -317,6 +350,8 @@ const Profile = () => {
         </div>
 
       </div>
+        </>
+      )}
     </div>
   );
 };

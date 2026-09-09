@@ -1,96 +1,55 @@
 import os
 import json
-import requests
+import google.generativeai as genai
 from typing import Dict, Any
 
-# We can use the OpenAI API or Gemini API. Here is an example using OpenAI structure.
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
 SYSTEM_PROMPT = """You are a professional resume optimizer. You will be given:
 1. A user's full profile in JSON format: [name, contact, summary, work_experience (list with company, role, dates, bullet points), education, skills, projects, certifications].
-2. A job description (JD) text.
+2. A Job Description (JD).
+Your goal is to tailor the user's resume JSON to best match the JD without making up fake experience.
+- Rewrite the `summary` to highlight relevant skills.
+- Rewrite `bullet_points` in `work_experience` to emphasize matching keywords from the JD.
+- Reorder `skills` to put matching ones first.
+IMPORTANT: You MUST return the ENTIRE JSON profile. Do NOT delete any sections, arrays, or fields (like company, role, dates, education, etc.) even if you don't edit them. Return ONLY the complete, modified JSON profile."""
 
-Your tasks:
-- Extract the top 5-7 keywords and required skills from the JD.
-- Compare them with the user's skills and experience.
-- Rewrite the user's work experience bullet points and summary to emphasize the most relevant achievements, using strong action verbs and quantifiable results.
-- IMPORTANT: Never add fake experience, degrees, or skills. Only rephrase what is already there, and if a required skill is missing, you may suggest adding a "Relevant Coursework" or "Certifications" section only if the user already has something related.
-- Output the revised resume in structured JSON with fields: summary, work_experience (list of updated bullet points), skills (re-ordered to highlight JD-relevant ones), and optionally a new "ATS Keywords" section.
-- Also return a list of matched keywords and a count of missing critical skills for the ATS score.
-
-Be concise and professional.
-"""
+REFINE_SYSTEM_PROMPT = """You are a professional resume editor.
+You will receive the original Job Description, the current JSON version of the tailored resume, and a piece of feedback from the user.
+Your job is to update the JSON resume according to the user's feedback, while keeping it tailored to the JD.
+IMPORTANT: You MUST return the ENTIRE JSON profile. Do NOT delete any sections, arrays, or fields (like company, role, dates, education, etc.) even if you don't edit them. Return ONLY the complete, modified JSON profile."""
 
 def tailor_resume(profile_data: Dict[str, Any], job_description: str) -> Dict[str, Any]:
-    """
-    Calls the LLM API to tailor the resume based on the JD.
-    """
-    if not OPENAI_API_KEY:
-        # Return mock tailored data for testing without API key
+    if not GEMINI_API_KEY:
         import copy
         mock = copy.deepcopy(profile_data)
-        mock["summary"] = "MOCK-TAILORED: " + mock.get("summary", "")
-        mock["ats_score"] = 95
-        mock["matched_keywords"] = ["Python", "FastAPI", "React"]
-        mock["missing_keywords"] = ["AWS"]
+        if "summary" in mock:
+            mock["summary"] = "[MOCK TAILORED] " + mock["summary"]
         if "work_experience" in mock and len(mock["work_experience"]) > 0:
+            if "bullet_points" not in mock["work_experience"][0]:
+                mock["work_experience"][0]["bullet_points"] = []
             mock["work_experience"][0]["bullet_points"].append("MOCK: Increased scalability by 200%.")
         return mock
 
-    prompt_content = f"User Profile JSON:\n{json.dumps(profile_data, indent=2)}\n\nJob Description:\n{job_description}"
-
-    headers = {
-        "Authorization": f"Bearer {OPENAI_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "model": "gpt-4o",  # or gpt-3.5-turbo depending on preference
-        "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": prompt_content}
-        ],
-        "response_format": {"type": "json_object"}
-    }
-
-    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-3.6-flash', generation_config={"response_mime_type": "application/json"})
     
-    if response.status_code == 200:
-        result = response.json()
-        return json.loads(result["choices"][0]["message"]["content"])
-    else:
-        raise Exception(f"Failed to generate tailored resume: {response.text}")
-
-REFINE_SYSTEM_PROMPT = """You are a resume editor. You have the current resume JSON and the user's feedback. Apply the changes strictly to the content requested. Never change facts or invent new ones. Only rephrase or restructure based on the instruction. Return the updated JSON in the exact same schema.
-"""
+    prompt = f"{SYSTEM_PROMPT}\n\nUser Profile JSON:\n{json.dumps(profile_data, indent=2)}\n\nJob Description:\n{job_description}"
+    response = model.generate_content(prompt)
+    
+    return json.loads(response.text)
 
 def refine_resume(current_resume: Dict[str, Any], feedback: str, jd_text: str) -> Dict[str, Any]:
-    if not OPENAI_API_KEY:
+    if not GEMINI_API_KEY:
         import copy
         mock = copy.deepcopy(current_resume)
         mock["summary"] = "[MOCK REFINED] " + mock.get("summary", "") + f" (Feedback: {feedback})"
         return mock
 
-    prompt_content = f"Original Job Description Context:\n{jd_text}\n\nCurrent Resume JSON:\n{json.dumps(current_resume, indent=2)}\n\nUser Feedback:\n{feedback}"
-
-    headers = {
-        "Authorization": f"Bearer {OPENAI_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "model": "gpt-4o",
-        "messages": [
-            {"role": "system", "content": REFINE_SYSTEM_PROMPT},
-            {"role": "user", "content": prompt_content}
-        ],
-        "response_format": {"type": "json_object"}
-    }
-
-    response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-3.6-flash', generation_config={"response_mime_type": "application/json"})
     
-    if response.status_code == 200:
-        result = response.json()
-        return json.loads(result["choices"][0]["message"]["content"])
-    else:
-        raise Exception(f"Failed to refine resume: {response.text}")
+    prompt = f"{REFINE_SYSTEM_PROMPT}\n\nOriginal Job Description Context:\n{jd_text}\n\nCurrent Resume JSON:\n{json.dumps(current_resume, indent=2)}\n\nUser Feedback:\n{feedback}"
+    response = model.generate_content(prompt)
+    
+    return json.loads(response.text)

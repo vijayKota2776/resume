@@ -5,6 +5,7 @@ import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from . import models, database
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "my-super-secret-key")
 ALGORITHM = "HS256"
@@ -27,7 +28,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.utcnow() + timedelta(days=7)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -47,7 +48,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise credentials_exception
     
     users_ref = database.db.collection('users')
-    query = users_ref.where('email', '==', email).limit(1).get()
+    query = users_ref.where(filter=FieldFilter('email', '==', email)).limit(1).get()
     
     if not query:
         raise credentials_exception
