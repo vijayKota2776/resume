@@ -10,5 +10,5 @@ streamlit
 requests
 jinja2
 python-dotenv
-firebase-admin
-google-generativeai
+firebase-admin==7.5.0
+google-generativeai==0.8.6
