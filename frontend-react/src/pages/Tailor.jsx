@@ -130,7 +130,7 @@ const Tailor = () => {
   };
 
   const handleVersionSelect = (verId) => {
-    const ver = versions.find(v => v.id === parseInt(verId));
+    const ver = versions.find(v => v.id === verId);
     if (ver) {
       setSelectedVersionId(ver.id);
       setCurrentResume(ver.data);
@@ -281,6 +281,17 @@ const Tailor = () => {
 
                 {/* Simulated Document Formatting */}
                 <div className="space-y-6 text-gray-800 text-sm leading-relaxed">
+                  
+                  {/* Header: Name and Contact */}
+                  <div className="text-center mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900 tracking-wide uppercase">
+                      {currentResume.name || currentResume.full_name || 'Name not provided'}
+                    </h2>
+                    <p className="text-gray-600 mt-1">
+                      {currentResume.contact || currentResume.email || 'Contact info not provided'}
+                    </p>
+                  </div>
+
                   <section>
                     <h4 className="font-bold text-gray-900 border-b border-gray-200 uppercase tracking-wider mb-2">Summary</h4>
                     <p>{currentResume.summary}</p>

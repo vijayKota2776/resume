@@ -19,7 +19,7 @@ api.interceptors.response.use((response) => {
 }, (error) => {
   if (error.response && error.response.status === 401) {
     localStorage.removeItem('token');
-    window.location.href = '/login';
+    window.dispatchEvent(new Event('auth-error'));
   }
   return Promise.reject(error);
 });
