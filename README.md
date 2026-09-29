@@ -98,5 +98,4 @@ This application is configured for easy deployment on modern cloud platforms.
 
 ---
 
-## 📝 License
-This project is for educational and portfolio purposes. Feel free to fork and customize!
+
